@@ -8,21 +8,24 @@
 
 window.onload = function() {
 
-    var demo = window.demo = {
-        vent: false,
-        reset: reset,
-        setData: setData,
-        toggleEmptyData: toggleEmptyData,
-        resetData: resetData
-    };
-
     var Hypergrid = fin.Hypergrid,
         initState = require('./setState'),
         initCellRenderers = require('./cellrenderers'),
         initFormatters = require('./formatters'),
         initCellEditors = require('./cellEditors'),
         initDashboard = require('./dashboard'),
-        initEvents = require('./events');
+        events = require('./events'),
+        initEvents = events.init;
+
+    var demo = window.demo = {
+        get vent() { return events.vent; },
+        set vent(bool) { events.vent = bool; },
+        events: events,
+        reset: reset,
+        setData: setData,
+        toggleEmptyData: toggleEmptyData,
+        resetData: resetData
+    };
 
     // convert field names containing underscore to camel case by overriding column enum decorator
     Hypergrid.behaviors.JSON.prototype.columnEnumKey = Hypergrid.behaviors.JSON.columnEnumDecorators.toCamelCase;
@@ -54,7 +57,7 @@ window.onload = function() {
 
     function reset() {
         grid.reset();
-        initEvents(demo, grid);
+        initEvents(grid);
     }
 
     var oldData;
@@ -89,5 +92,5 @@ window.onload = function() {
     initCellRenderers(demo, grid);
     initFormatters(demo, grid);
     initCellEditors(demo, grid);
-    initEvents(demo, grid);
+    initEvents(grid);
 };

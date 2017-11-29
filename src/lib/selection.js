@@ -510,6 +510,7 @@ module.exports = {
                 rows: this.getSelectedRows(),
                 columns: this.getSelectedColumns(),
                 selections: this.selectionModel.getSelections(),
+                grid: this
             }
         });
         this.canvas.dispatchEvent(selectionEvent);

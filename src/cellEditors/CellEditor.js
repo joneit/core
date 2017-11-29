@@ -139,7 +139,8 @@ var CellEditor = Base.extend('CellEditor', {
                     meta: e.metaKey,
                     shift: e.shiftKey,
                     identifier: e.key,
-                    editor: this
+                    editor: this,
+                    grid: grid
                 });
                 grid.delegateKeyDown(finEvent);
             }
