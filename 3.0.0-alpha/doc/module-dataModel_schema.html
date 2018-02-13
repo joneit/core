@@ -292,8 +292,20 @@ which sets the row index and returns the accessor itself.</p>
     <h4 class="name" id="~initSchemaEnum"><span class="type-signature">(inner) </span>initSchemaEnum<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
+    <p class="summary"><p>Build schema dictionary (enum)</p></p>
+    
 
 
+
+<div class="description">
+    <p>For each column schema in the schema array, adds three properties to the array object:</p>
+<ul>
+<li>name, verbatim</li>
+<li>name, transformed to all-caps with runs of punctuation and camel case transitions to underscore converted to underscore</li>
+<li>name, transformed to camelCase with runs of punctuation removed and the next letter capitalized</li>
+</ul>
+<p>Conflicts can obviously arise, in which case who's ever first wins.</p>
+</div>
 
 
 
