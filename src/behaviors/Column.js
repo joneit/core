@@ -4,14 +4,15 @@
 
 var overrider = require('overrider');
 
-var deprecated = require('../lib/deprecated');
 var toFunction = require('../lib/toFunction');
 var HypergridError = require('../lib/error');
-var images = require('../../images/index');
+var images = require('../../images');
 
 
 /** @summary Create a new `Column` object.
  * @see {@link module:Cell} is mixed into Column.prototype.
+ * @mixes cellProperties.mixin
+ * @mixes columnProperties.mixin
  * @constructor
  * @param behavior
  * @param {number|string|object} indexOrOptions - One of:
@@ -27,41 +28,24 @@ var images = require('../../images/index');
  *    -1   | Row header column
  *    -2   | Tree (drill-down) column
  */
-function Column(behavior, indexOrOptions) {
-    var index, schema, options, icon;
+function Column(behavior, index) {
+    var options, icon;
 
     this.behavior = behavior;
     this.dataModel = behavior.dataModel;
 
-    schema = this.behavior.dataModel.schema;
-
-    switch (typeof indexOrOptions) {
-        case 'number':
-            index = indexOrOptions;
-            options = {};
-            break;
-        case 'string':
-            index = getIndexFromName(indexOrOptions);
-            options = {};
-            break;
-        case 'object':
-            options = indexOrOptions;
-            index = options.index !== undefined
-                ? options.index
-                : getIndexFromName(options.name);
+    if (typeof index === 'object') {
+        options = index;
+        index = options.index !== undefined ? options.index : options.name;
+    } else {
+        options = {};
     }
 
-    function getIndexFromName(name) {
-        return schema.findIndex(function(columnSchema, i) {
-            return columnSchema.name === name;
-        });
-    }
+    this.schema = this.behavior.schema[index];
 
-    if (index === undefined) {
+    if (!this.schema) {
         throw 'Column not found in data.';
     }
-
-    this._index = index;
 
     this.properties = options;
 
@@ -71,8 +55,10 @@ function Column(behavior, indexOrOptions) {
             icon = images[Object.create(this.properties.treeHeader, { isDataRow: { value: true } }).leftIcon];
             this.properties.minimumColumnWidth = icon ? icon.width + 3 : 0;
             break;
+
         case this.behavior.rowColumnIndex:
             break;
+
         default:
             if (index < 0) {
                 throw '`index` out of range';
@@ -83,22 +69,17 @@ function Column(behavior, indexOrOptions) {
 Column.prototype = {
     constructor: Column.prototype.constructor,
     $$CLASS_NAME: 'Column',
-    deprecated: deprecated,
 
     HypergridError: HypergridError,
 
     mixIn: overrider.mixIn,
-
-    set: function(options) {
-        return this.deprecated('set(options)', 'setProperties(options)', '1.2.0', arguments);
-    },
 
     /**
      * @summary Index of this column in the `fields` array.
      * @returns {number}
      */
     get index() { // read-only (no setter)
-        return this._index;
+        return this.schema.index;
     },
 
     /**
@@ -106,8 +87,7 @@ Column.prototype = {
      * @returns {string|undefined} Returns `undefined` if the column is not in the schema (such as for handle column).
      */
     get name() { // read-only (no setter)
-        var columnSchema = this.dataModel.schema[this._index];
-        return columnSchema && columnSchema.name;
+        return this.schema.name;
     },
 
     /**
@@ -120,40 +100,33 @@ Column.prototype = {
      * @type {string}
      */
     set header(headerText) {
-        this.dataModel.schema[this.index].header = headerText;
-        this.dataModel.prop(null, this.index, 'header', headerText);
+        this.schema.header = headerText;
         this.behavior.grid.repaint();
     },
     get header() {
-        return this.dataModel.schema[this.index].header;
+        return this.schema.header;
     },
 
     /**
      * @summary Get or set the computed column's calculator function.
-     * @desc Setting the value here updates the calculator in both:
-     * * the `calculator` array in the underlying data source; and
-     * * the filter.
+     * @desc Setting the value here updates the calculator in the data model schema.
      *
      * The results of the new calculations will appear in the column cells on the next repaint.
      * @type {string}
      */
     set calculator(calculator) {
-        var schema = this.dataModel.schema;
-
         calculator = resolveCalculator.call(this, calculator);
-
-        if (calculator !== schema[this.index].calculator) {
+        if (calculator !== this.schema.calculator) {
             if (calculator === undefined) {
-                delete schema[this.index].calculator;
+                delete this.schema.calculator;
             } else {
-                schema[this.index].calculator = calculator;
+                this.schema.calculator = calculator;
             }
-            this.behavior.prop(null, this.index, 'calculator', calculator);
-            this.behavior.applyAnalytics();
+            this.behavior.reindex();
         }
     },
     get calculator() {
-        return this.dataModel.schema[this.index].calculator;
+        return this.schema.calculator;
     },
 
     /**
@@ -164,17 +137,11 @@ Column.prototype = {
      * @type {string}
      */
     set type(type) {
-        this._type = type;
-        //TODO: This is calling reindex for every column during grid init. Maybe defer all reindex calls until after an grid 'ready' event
-        this.dataModel.prop(null, this.index, 'type', type);
+        this.schema.type = type;
         this.behavior.reindex();
     },
     get type() {
-        return this._type;
-    },
-
-    getUnfilteredValue: function(y) {
-        return this.deprecated('getUnfilteredValue(y)', null, '1.2.0', arguments, 'No longer supported');
+        return this.schema.type;
     },
 
     getValue: function(y) {
@@ -279,10 +246,6 @@ Column.prototype = {
         this.addProperties(ownProperties);
     },
 
-    getProperties: function() {
-        return this.deprecated('getProperties()', 'properties', '1.2.0');
-    },
-
     /** This method is provided because some grid renderer optimizations require that the grid renderer be informed when column colors change. Due to performance concerns, they cannot take the time to figure it out for themselves. Along the same lines, making the property a getter/setter (in columnProperties.js), though doable, might present performance concerns as this property is possibly the most accessed of all column properties.
      * @param color
      */
@@ -290,19 +253,6 @@ Column.prototype = {
         if (this.properties.backgroundColor !== color) {
             this.properties.backgroundColor = color;
             this.behavior.grid.renderer.rebundleGridRenderers();
-        }
-    },
-
-    /**
-     * @param {object} properties
-     * @param {boolean} [preserve=false]
-     */
-    setProperties: function(properties, preserve) {
-        if (!preserve) {
-            this.deprecated('setProperties', 'setProperties(properties) has been deprecated in favor of properties (setter) as of v1.2.0. (Will be removed in a future version.) This advice only pertains to usages of setProperties when called with a single parameter. When called with a truthy second parameter, use the new addProperties(properties) call instead.');
-            this.properties = properties;
-        } else {
-            this.deprecated('setPropertiesPreserve', 'setProperties(properties, preserve)', 'addProperties(properties)', '1.2.0', arguments, 'This warning pertains to setProperties only when preserve is truthy. When preserve is faulty, use the new properties setter.');
         }
     },
 
@@ -337,7 +287,7 @@ Column.prototype = {
                 format: {
                     // `options.format` is a copy of the cell's `format` property which is:
                     // 1. Subject to adjustment by the `getCellEditorAt` override.
-                    // 2. Then used by the cell editor to reference the predefined localizer.
+                    // 2. Then used by the cell editor to reference the registered localizer (defaults to 'string' localizer)
                     writable: true,
                     enumerable: true, // so cell editor will copy it to self
                     value: cellEvent.properties.format
@@ -415,7 +365,7 @@ function resolveCalculator(calculator) {
     return calculators[key];
 }
 
-Column.prototype.mixIn(require('./cellProperties'));
-Column.prototype.mixIn(require('./columnProperties'));
+Column.prototype.mixIn(require('./cellProperties').mixin);
+Column.prototype.mixIn(require('./columnProperties').mixin);
 
 module.exports = Column;
