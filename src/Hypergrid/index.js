@@ -92,11 +92,6 @@ var Hypergrid = Base.extend('Hypergrid', {
         // Install shared plug-ins (those with a `preinstall` method)
         Hypergrid.prototype.installPlugins(options.plugins);
 
-        if (!this.on) {
-            // Do this now rather than at Hypergrid definition time to allow for grid.modules.event update between then and now
-            Hypergrid.prototype.mixIn(Hypergrid.modules.events);
-        }
-
         this.lastEdgeSelection = [0, 0];
         this.isWebkit = navigator.userAgent.toLowerCase().indexOf('webkit') > -1;
         this.selectionModel = new SelectionModel(this);
@@ -122,6 +117,8 @@ var Hypergrid = Base.extend('Hypergrid', {
          * @memberOf Hypergrid#
          */
         this.cellEditors = new CellEditors({ grid: this });
+
+        this.initCanvas(options);
 
         if (options.data) {
             this.setData(options.data, options); // if no behavior has yet been set, `setData` sets a default behavior
@@ -755,7 +752,6 @@ var Hypergrid = Base.extend('Hypergrid', {
     setBehavior: function(options) {
         var Behavior = options && options.Behavior || behaviorJSON;
         this.behavior = new Behavior(this, options);
-        this.initCanvas(options);
         this.initScrollbars();
         this.refreshProperties();
         this.behavior.reindex();
@@ -941,6 +937,7 @@ var Hypergrid = Base.extend('Hypergrid', {
             this.canvas = canvas;
 
             this.delegateCanvasEvents();
+            this.delegateDataModelEvents();
         }
     },
 
@@ -1944,6 +1941,7 @@ Hypergrid.mixIn(require('./themes').sharedMixin);
 
 Hypergrid.prototype.mixIn(require('./themes').mixin);
 Hypergrid.prototype.mixIn(require('./events').mixin);
+Hypergrid.prototype.mixIn(require('./dataModel/events').mixin);
 Hypergrid.prototype.mixIn(require('./selection').mixin);
 Hypergrid.prototype.mixIn(require('./scrolling').mixin);
 

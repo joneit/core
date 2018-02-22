@@ -4,6 +4,10 @@
 
 var Rectangle = require('rectangular').Rectangle;
 
+/**
+ * Hypergrid/index.js mixes this module into its prototype.
+ * @mixin
+ */
 exports.mixin = {
     selectionInitialize: function() {
         var grid = this;

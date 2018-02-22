@@ -3,7 +3,8 @@
 var Scrollbar = require('./modules').Scrollbar;
 
 /**
- * Additions to `Hypergrid.prototype` for scrollbar support.
+ * @summary Scrollbar support.
+ * @desc Hypergrid/index.js mixes this module into its prototype.
  * @mixin
  */
 exports.mixin = {

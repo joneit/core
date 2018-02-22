@@ -162,7 +162,8 @@ function applyTheme(theme) {
 
 
 /**
- * Additions to `Hypergrid.prototype` for setting an instance theme.
+ * @summary Instance theme support.
+ * @desc Hypergrid/index.js mixes this module into its prototype.
  * @mixin
  */
 var mixin = {
@@ -218,7 +219,8 @@ Object.defineProperty(mixin, 'theme', {
 
 
 /**
- * Shared properties of `Hypergrid` for registering themes and setting a global theme.
+ * @summary Theme registration and global theme support.
+ * @desc Hypergrid/index.js mixes this module into its "shared namespace" (_i.e.,_ as properties of the constructor).
  * @mixin
  */
 var sharedMixin = {
