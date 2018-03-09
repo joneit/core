@@ -21,7 +21,7 @@ window.onload = function() {
         initState = require('./setState'),
         initCellRenderers = require('./cellrenderers'),
         initFormatters = require('./formatters'),
-        initCellEditors = require('./cellEditors'),
+        initCellEditors = require('./celleditors'),
         initDashboard = require('./dashboard'),
         initEvents = require('./events');
 
@@ -50,7 +50,7 @@ window.onload = function() {
         m: { get: function() { return grid.behavior.dataModel; } }
     });
 
-    console.dir({ schema: behavior.schema });
+    console.log('schema', behavior.schema);
 
     function setData(data, options) {
         options = !data.length ? undefined : options || {
@@ -94,6 +94,6 @@ window.onload = function() {
     initDashboard(demo, grid);
     initState(demo, grid);
 
-    // Following needed to for changes to row height effected in data model subrows POC; changes not calls to setValue...
-    setTimeout(function() { grid.behaviorStateChanged(); });
+    // Following would be needed for row height changes made in data model subrows POC:
+    // setTimeout(function() { grid.behaviorStateChanged(); });
 };
