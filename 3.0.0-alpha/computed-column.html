@@ -1,28 +1,41 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Hypergrid Computed Values Demo</title>
+        <title>Hypergrid Computed Columns Demo</title>
+        <link rel="icon" type="image/png" href="img/hypergrid-icon.png">
+        <link rel="stylesheet" href="css/computed-column.css">
+
         <script src="build/fin-hypergrid.js"></script>
-        <script src="js/computed-column.js"></script>
-        <style>
-            th, td {
-                width: 50%;
-                padding: .65em;
-                vertical-align: top;
-                border:1px solid #444;
-                font-size: small;
-                font-family: sans-serif;
-            }
-            table { border-collapse: collapse }
-            caption { text-align: left; padding: 1em 0 .65em 0 }
-            table, div#example { width:400px; }
-            div#example {
-                position:relative;
-                height:150px;
-                margin-top:1em
-            }
-            code { font-weight: bold }
-        </style>
+
+        <script>
+            window.onload = function() {
+                var grid = window.grid = new fin.Hypergrid('div#example', {
+                    data: [
+                        { value: 3 },
+                        { value: 4 },
+                        { value: -4 },
+                        { value: 5 }
+                    ]
+                });
+
+                grid.behavior.schema.push({
+                    name: 'squared',
+                    calculator: square
+                });
+
+                // recreate to include new column
+                grid.behavior.createColumns();
+
+                // force type of new column to 'number' because current auto-detect does not know about calculated columns
+                grid.behavior.getColumn(1).type = 'number';
+
+                grid.repaint();
+
+                function square(dataRow, columnName) {
+                    return dataRow.value * dataRow.value;
+                }
+            };
+        </script>
     </head>
     <body>
     <h3>Computed Column</h3>

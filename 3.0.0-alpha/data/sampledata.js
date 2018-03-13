@@ -57,16 +57,15 @@
         return person;
     };
 
-    var data1 = [];
-    var data2 = [];
+    var data1 = window.people1 = [];
+    var data2 = window.people2 = [];
     for (var i = 0; i < numRows/2; i++) {
         data1.push(randomPerson());
     }
     for (var i = 0; i < numRows; i++) {
         data2.push(randomPerson());
     }
-    window.people1 = data1;
-    window.people2 = data2;
+
     window.states = states;
     window.firstNames = firstNames;
     window.lastNames = lastNames;
