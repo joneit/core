@@ -4,7 +4,7 @@
  * @module dataModel/schema
  */
 
-var headerifiers = require('../../lib/headerifiers');
+var headerifiers = require('../../headerifiers/index');
 
 /**
  * @function module:dataModel/schema.enrich
@@ -12,9 +12,9 @@ var headerifiers = require('../../lib/headerifiers');
  *
  * Enriches schema. For each "column schema" (element of schema array):
  *
- * 1. Objectify column schemata<br>
+ * 1. Objectify column schema<br>
  * Ensures each column schema is an object with a `name` property.
- * 2. Index schema schemata<br>
+ * 2. Index column schema<br>
  * Adds an `index` property to each column schema element.
  * 3. Create enum entries<br>
  * Constructs an enum directly on the schema array object itself. This is a convenience feature, helpful for looking up column schema by column name rather than by index. To get the index of a column when you know the name:
@@ -39,6 +39,8 @@ exports.enrich = function(schema) {
     schema.forEach(function(columnSchema, index) {
         if (typeof columnSchema === 'string') {
             schema[index] = { name: columnSchema };
+        } else if (columnSchema.name === 'undefined') {
+            columnSchema.name = index.toString();
         }
     });
 
@@ -53,14 +55,12 @@ exports.enrich = function(schema) {
     });
 
     // Set `header` property.
-    var headerifier = headerifiers[this.properties.headerify];
-    if (headerifier) {
-        schema.forEach(function(columnSchema) {
-            if (!columnSchema.header) {
-                columnSchema.header = headerifier(columnSchema.name);
-            }
-        });
-    }
+    var headerify = headerifiers[this.properties.headerify];
+    schema.forEach(function(columnSchema) {
+        if (!columnSchema.header) {
+            columnSchema.header = headerify(columnSchema.name);
+        }
+    });
 
     initSchemaEnum.call(dataModel);
 

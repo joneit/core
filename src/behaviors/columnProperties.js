@@ -7,10 +7,10 @@
  */
 function createColumnProperties() {
     var column = this,
-        tableState = column.behavior.grid.properties,
+        gridProps = column.behavior.grid.properties,
         properties;
 
-    properties = Object.create(tableState, {
+    properties = Object.create(gridProps, {
 
         index: { // read-only (no setter)
             get: function() {
@@ -42,7 +42,8 @@ function createColumnProperties() {
             },
             set: function(header) {
                 if (this !== column.properties) {
-                    tableState.header = header; // throws an error
+                    // trying to set a cell header
+                    gridProps.header = header; // throw same error as when trying to set a grid header
                 }
                 column.header = header;
             }
@@ -54,7 +55,8 @@ function createColumnProperties() {
             },
             set: function(type) {
                 if (this !== column.properties) {
-                    tableState.type = type; // throws an error
+                    // trying to set a cell type
+                    gridProps.type = type; // throw same error as when trying to set a grid type
                 }
                 column.type = type;
             }
@@ -66,7 +68,8 @@ function createColumnProperties() {
             },
             set: function(calculator) {
                 if (this !== column.properties) {
-                    tableState.calculator = calculator; // throws an error
+                    // trying to set a cell calculator
+                    gridProps.calculator = calculator; // throw same error as when trying to set a grid calculator
                 }
                 column.calculator = calculator;
             }
@@ -74,6 +77,7 @@ function createColumnProperties() {
 
         toJSON: {
             // although we don't generally want header, type, and calculator to be enumerable, we do want them to be serializable
+            // todo: ??? not sure now (3/13/2018) why these shouldn't be enumerable
             value: function() {
                 return Object.assign({
                     header: this.header,

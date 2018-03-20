@@ -18,7 +18,7 @@ function capitalize(a, b, c) {
  * @returns {string}
  * @memberOf namespace:fields
  */
-exports.titleize = function(string) {
+module.exports = function(string) {
     var title = (REGEXP_LOWER_CASE_LETTER.test(string) ? string : string.toLowerCase())
         .replace(REGEXP_WORD_SEPARATORS, capitalize)
         .replace(REGEXP_CAPITAL_LETTERS, ' $&')

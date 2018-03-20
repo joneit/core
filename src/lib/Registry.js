@@ -31,7 +31,7 @@ var Registry = Base.extend('Registry', {
         name = name || item.getClassName && item.getClassName();
 
         if (!name) {
-            throw new this.HypergridError('Cannot register a "' + this.friendlyName() + '" without a name.');
+            throw new this.HypergridError('Cannot register ' + this.friendlyName() + ' without a name.');
         }
 
         return (this[name] = item);
@@ -87,10 +87,32 @@ var Registry = Base.extend('Registry', {
                 .replace(/([A-Z])/g, ' $1')
                 .trim()
                 .toLowerCase();
+        } else {
+            name = singularOf(this.getClassName()).toLowerCase();
         }
-        return name || '[unnamed class]';
+        name = name || 'item';
+        return indefArtOf(name) + ' ' + name;
     }
 });
+
+var endings = [
+    { plural: /ies$/, singular: 'y' },
+    { plural: /s$/, singular: '' }
+];
+
+function singularOf(name) {
+    endings.find(function(ending) {
+        if (ending.plural.test(name)) {
+            name = name.replace(ending.plural, ending.singular);
+            return true;
+        }
+    });
+    return name;
+}
+
+function indefArtOf(name) {
+    return /^[aeiou]/.test(name) ? 'an' : 'a';
+}
 
 
 module.exports = Registry;

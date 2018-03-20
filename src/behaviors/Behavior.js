@@ -8,6 +8,7 @@ var Column = require('./Column');
 var cellEventFactory = require('../lib/cellEventFactory');
 var featureRegistry = require('../features');
 var propClassEnum = require('../defaults.js').propClassEnum;
+var assignOrDelete = require('../lib/misc').assignOrDelete;
 
 
 var noExportProperties = [
@@ -123,6 +124,9 @@ var Behavior = Base.extend('Behavior', {
         }
 
         this.scrollPositionX = this.scrollPositionY = 0;
+
+        this.rowPropertiesPrototype = Object.create(this.grid.properties,
+            require('./rowProperties').rowPropertiesPrototypeDescriptors);
 
         this.createColumns();
 
@@ -321,34 +325,59 @@ var Behavior = Base.extend('Behavior', {
      * @memberOf Behavior#
      * @desc Restore this table to a previous state.
      * See the [memento pattern](http://c2.com/cgi/wiki?MementoPattern).
-     * @param {Object} memento - assignable grid properties
+     * @param {Object} properties - assignable grid properties
      */
-    setState: function(memento) {
-        this.clearState();
-        this.addState(memento);
+    setState: function(properties) {
+        this.addState(properties, true);
     },
 
-    addState: function(properties) {
-        Object.assign(this.grid.properties, properties);
-        this.setAllColumnProperties(properties.columnProperties);
+    /**
+     *
+     * @param {Object} properties - assignable grid properties
+     * @param {boolean} [settingState] - Clear properties object before assignments.
+     */
+    addState: function(properties, settingState) {
+        if (settingState) {
+            this.clearState();
+        }
+
+        var gridProps = this.grid.properties;
+
+        gridProps.settingState = settingState;
+        assignOrDelete(gridProps, properties);
+        delete gridProps.settingState;
+
         this.reindex();
     },
 
     /**
-     * @summary Sets properties of multiple columns.
-     * @desc Sets column properties to elements of given array.
-     * The array may be sparse; never defined or deleted elements are ignored.
-     * In addition, falsy elements are ignored.
-     * @param {object[]} columnProperties
+     * @summary Sets properties for active columns.
+     * @desc Sets multiple columns' properties from elements of given array or collection. Keys may be column indexes or column names. The properties collection is cleared first. Falsy elements are ignored.
+     * @param {object[]|undefined} columnsHash - If undefined, this call is a no-op.
      */
-    setAllColumnProperties: function(columnProperties) {
-        if (columnProperties) {
-            columnProperties.forEach(function(properties, i) {
-                if (properties) {
-                    this.getColumn(i).properties = properties;
-                }
-            }, this);
+    setAllColumnProperties: function(columnsHash) {
+        this.addAllColumnProperties(columnsHash, true);
+    },
+
+    /**
+     * @summary Adds properties for multiple columns.
+     * @desc Adds . The properties collection is optionally cleared first. Falsy elements are ignored.
+     * @param {object[]|undefined} columnsHash - If undefined, this call is a no-op.
+     * @param {boolean} [settingState] - Clear columns' properties objects before copying properties.
+     */
+    addAllColumnProperties: function(columnsHash, settingState) {
+        if (!columnsHash) {
+            return;
         }
+
+        var columns = this.grid.behavior.getColumns();
+
+        Object.keys(columnsHash).forEach(function(key) {
+            var column = columns[key];
+            if (column) {
+                column.addProperties(columnsHash[key], settingState);
+            }
+        });
     },
 
     setColumnOrder: function(columnIndexes) {

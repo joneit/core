@@ -290,7 +290,7 @@ var Hypergrid = Base.extend('Hypergrid', {
             var: { value: new Var() }
         });
 
-        // For all all default props of object type, if a dynamic prop, invoke setter; else deep clone it so changes
+        // For all default props of object type, if a dynamic prop, invoke setter; else deep clone it so changes
         // made to inner props won't go to object on theme or defaults layers which are shared by other instances.
         Object.keys(defaults).forEach(function(key) {
             var value = defaults[key];
@@ -561,7 +561,16 @@ var Hypergrid = Base.extend('Hypergrid', {
      * @see [Memento pattern](http://en.wikipedia.org/wiki/Memento_pattern)
      */
     setState: function(state) {
-        this.behavior.setState(state);
+        this.addState(state, true);
+    },
+
+    /**
+     * @memberOf Hypergrid#
+     * @desc Add to the state object.
+     * @param {object} state
+     */
+    addState: function(state, settingState) {
+        this.behavior.addState(state, settingState);
         this.refreshProperties();
         this.behaviorChanged();
     },
@@ -575,7 +584,6 @@ var Hypergrid = Base.extend('Hypergrid', {
     },
 
     /**
-     * @todo Only output values when they differ from defaults (deep compare needed).
      * @param {object} [options]
      * @param {string[]} [options.blacklist] - List of grid properties to exclude. Pertains to grid own properties only.
      * @param {boolean} [options.compact] - Run garbage collection first. The only property this current affects is `properties.calculators` (removes unused calculators).
@@ -588,7 +596,10 @@ var Hypergrid = Base.extend('Hypergrid', {
 
         var space = options.space === undefined ? '\t' : options.space,
             properties = this.properties,
-            calculators = properties.calculators;
+            calculators = properties.calculators,
+            blacklist = options.blacklist = options.blacklist || [];
+
+        blacklist.push('columnProperties'); // Never output this synonym of 'columns'
 
         if (calculators) {
             if (options.compact) {
@@ -608,8 +619,8 @@ var Hypergrid = Base.extend('Hypergrid', {
         this.headerify = options.headerify;
 
         var json = JSON.stringify(properties, function(key, value) {
-            if (options.blacklist && this === properties && options.blacklist.indexOf(key) >= 0) {
-                value = undefined;
+            if (this === properties && blacklist.indexOf(key) >= 0) {
+                value = undefined; // JSON.stringify ignores undefined props
             } else if (key === 'calculator') {
                 if (calculators) {
                     // convert function reference to registry key
@@ -788,6 +799,13 @@ var Hypergrid = Base.extend('Hypergrid', {
     },
 
     /**
+     * @memberOf Behavior#
+     */
+    reindex: function() {
+        this.needsReindex = this.needsShapeChanged = true;
+    },
+
+    /**
      * @memberOf Hypergrid#
      * @desc I've been notified that the behavior has changed.
      */
@@ -825,6 +843,10 @@ var Hypergrid = Base.extend('Hypergrid', {
      * Called from renderer/index.js
      */
     deferredBehaviorChange: function() {
+        if (this.needsReindex) {
+            this.behavior.reindex();
+        }
+
         if (this.needsShapeChanged) {
             if (this.divCanvas) {
                 this.synchronizeScrollingBoundaries(); // calls computeCellsBounds and repaint (state change)

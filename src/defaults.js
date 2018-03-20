@@ -1028,10 +1028,9 @@ var defaults = {
     autoSelectColumns: false,
 
     /** @summary Name of a formatter for cell text.
-     * @desc The default (`undefined`) falls back to `column.type`.
-     * The value `null` does no formatting.
+     * @desc Unknown formatter falls back to the `string` formatter (simple conversion to string with `+ ''`).
      * @default undefined
-     * @type {undefined|null|string}
+     * @type {string}
      * @memberOf module:defaults
      * @tutorial localization
      */
@@ -1040,7 +1039,7 @@ var defaults = {
     /** @summary Name of a cell editor from the {@link module:cellEditors|cellEditors API}..
      * @desc Not editable if named editor is does not exist.
      * @default undefined
-     * @type {undefined|null|string}
+     * @type {string}
      * @memberOf module:defaults
      * @tutorial cell-editors
      */

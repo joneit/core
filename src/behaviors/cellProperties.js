@@ -149,22 +149,26 @@ exports.columnMixin = {
 
     /**
      * @param {number} rowIndex - Data row coordinate.
-     * @param {object} properties - Hash of cell properties.
+     * @param {object|undefined} properties - Hash of cell properties. If `undefined`, this call is a no-op.
      * @returns {*}
      * @memberOf Column#
      */
     setCellProperties: function(rowIndex, properties, dataModel) {
-        return Object.assign(newCellPropertiesObject.call(this, rowIndex, dataModel), properties);
+        if (properties) {
+            return Object.assign(newCellPropertiesObject.call(this, rowIndex, dataModel), properties);
+        }
     },
 
     /**
      * @param {number} rowIndex - Data row coordinate.
-     * @param {object} properties - Hash of cell properties.
+     * @param {object|undefined} properties - Hash of cell properties. If `undefined`, this call is a no-op.
      * @returns {object} Cell's own properties object, which will be created by this call if it did not already exist.
      * @memberOf Column#
      */
     addCellProperties: function(rowIndex, properties, dataModel) {
-        return Object.assign(getCellPropertiesObject.call(this, rowIndex, dataModel), properties);
+        if (properties) {
+            return Object.assign(getCellPropertiesObject.call(this, rowIndex, dataModel), properties);
+        }
     },
 
     /**

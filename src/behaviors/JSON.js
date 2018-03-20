@@ -30,11 +30,10 @@ var JSON = Behavior.extend('behaviors.JSON', {
         Behavior.prototype.createColumns.call(this);
 
         this.schema.forEach(function(columnSchema, index) {
-            this.addColumn({
-                index: index,
-                header: columnSchema.header,
-                calculator: columnSchema.calculator
-            });
+            this.addColumn(columnSchema);
+            if (!(columnSchema.name in this.allColumns)) {
+                this.allColumns[columnSchema.name] = this.allColumns[index];
+            }
         }, this);
     },
 
