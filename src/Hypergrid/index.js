@@ -8,6 +8,7 @@ var Point = require('rectangular').Point;
 var Rectangle = require('rectangular').Rectangle;
 var _ = require('object-iterators'); // fyi: installs the Array.prototype.find polyfill, as needed
 var injectCSS = require('inject-stylesheet-template').bind(require('../../css'));
+var GetSmart = require('get-smart');
 
 var Base = require('../Base');
 var defaults = require('../defaults');
@@ -1957,6 +1958,43 @@ Hypergrid.defaults = Hypergrid.properties = defaults;
 // Hypergrid core code references them via this object — rather than require() — where used.
 // Note that `modules` also supports the Hypergrid Module Loader (included only with the build file).
 Hypergrid.modules = modules;
+
+// Module name: (m=path.match(EXTRACT_FILENAME))[7] || m[2]
+// Which is: Either between ; and . OR between last / (if any) and [?#;]
+var EXTRACT_MODULE_NAME = /(\.\.?|\/|([^\/.?#;]+)(\.([^.]*?)|\/)?)([?#].*?)?(;(([^.]+)\.([^.]+)|\.?([^.]+)))?$/;
+function extractModuleName(url) {
+    var m = url.match(EXTRACT_MODULE_NAME), moduleName = m[8] || m[2];
+
+    if (!moduleName) {
+        throw new ReferenceError('Hypergrid.require cannot determine module name from URL "' + url + '" (try appending ;modulename.js to end)');
+    }
+
+    return moduleName;
+}
+
+var getSmart = new GetSmart;
+getSmart.require = getModule;
+
+function getModule(moduleName) {
+    return modules[moduleName];
+}
+
+Hypergrid.require = function(path, callback, modulePrototype) {
+    if (callback) {
+        getSmart.fetch(path, function(results) {
+            if (typeof path === 'object') {
+                Object.keys(results).forEach(function(path) {
+                    modules[extractModuleName(path)] = results[path];
+                });
+            } else {
+                modules[extractModuleName(path)] = results;
+            }
+            callback(results);
+        }, modulePrototype);
+    } else {
+        return modules[path];
+    }
+};
 
 
 module.exports = Hypergrid;
